@@ -22,6 +22,8 @@ arm_controller:
       - joint6
       - rh_r1_joint
 
+    allow_nonzero_velocity_at_trajectory_end: true
+    
     interface_name: position
 
     command_interfaces:

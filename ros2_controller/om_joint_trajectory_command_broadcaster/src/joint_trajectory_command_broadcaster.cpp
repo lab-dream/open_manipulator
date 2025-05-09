@@ -37,6 +37,7 @@ namespace joint_trajectory_command_broadcaster
 {
 const auto kUninitializedValue = std::numeric_limits<double>::quiet_NaN();
 using hardware_interface::HW_IF_POSITION;
+using hardware_interface::HW_IF_VELOCITY;
 
 JointTrajectoryCommandBroadcaster::JointTrajectoryCommandBroadcaster() {}
 
@@ -105,6 +106,7 @@ controller_interface::CallbackReturn JointTrajectoryCommandBroadcaster::on_confi
   // Map interface if needed
   map_interface_to_joint_state_.clear();
   map_interface_to_joint_state_[HW_IF_POSITION] = params_.map_interface_to_joint_state.position;
+  map_interface_to_joint_state_[HW_IF_VELOCITY] = params_.map_interface_to_joint_state.velocity;
 
   try {
     const std::string topic_name_prefix = params_.use_local_topics ? "~/" : "";
@@ -286,10 +288,13 @@ controller_interface::return_type JointTrajectoryCommandBroadcaster::update(
     traj_msg.points.clear();
     traj_msg.points.resize(1);
     traj_msg.points[0].positions.resize(num_joints, kUninitializedValue);
+    traj_msg.points[0].velocities.resize(num_joints, kUninitializedValue);
 
     for (size_t i = 0; i < num_joints; ++i) {
       double pos_value =
         get_value(name_if_value_mapping_, joint_names_[i], HW_IF_POSITION);
+      double vel_value =
+        get_value(name_if_value_mapping_, joint_names_[i], HW_IF_VELOCITY);
 
       // Check if the current joint is in the reverse_joints parameter
       if (
@@ -299,12 +304,14 @@ controller_interface::return_type JointTrajectoryCommandBroadcaster::update(
           joint_names_[i]) != params_.reverse_joints.end())
       {
         pos_value = -pos_value;
+        vel_value = -vel_value;
       }
 
       // Apply offset
       pos_value += joint_offsets_[i];
 
       traj_msg.points[0].positions[i] = pos_value;
+      traj_msg.points[0].velocities[i] = vel_value;
     }
 
     // Optionally set velocities/accelerations/time_from_start if needed

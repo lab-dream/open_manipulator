@@ -72,6 +72,7 @@
         - rh_r1_joint
       interfaces:
         - position
+        - velocity
       reverse_joints:
         - rh_r1_joint
       offsets:
